@@ -73,7 +73,7 @@ Ensure the following are installed:
 
 #### 1. Clone the Repository
    ```bash
-   git clone https://github.com/Sadaf2005/AI-Interview-Mocker.git
+   git clone https://github.com/adharshkc/AI-Interview-Mocker.git
    cd AI-Interview-Mocker
    ```
 
@@ -120,7 +120,7 @@ We welcome contributions to make AI-Interview-Mocker even better! Follow these s
 1. **Fork the Repository**: Click the "Fork" button on GitHub.
 2. **Clone Your Fork**: Clone the repository to your local machine.
    ```bash
-   git clone https://github.com/Sadaf2005/AI-Interview-Mocker.git
+   git clone https://github.com/adharshkc/AI-Interview-Mocker.git
    ```
 3. **Create a New Branch**: Work on a new feature or bug fix.
    ```bash

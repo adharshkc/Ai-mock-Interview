@@ -338,7 +338,7 @@ function AddNewInterview() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-2xl">
-              Tell us more about your job interview
+              Tell us more about your mock interview
             </DialogTitle>
             <div>
               <p className="text-sm text-muted-foreground">
@@ -439,7 +439,7 @@ function AddNewInterview() {
                   </div>
                   
                   <div className="mt-4 my-2">
-                    <label>Job Role/Job position</label>
+                    <label>Mock Role</label>
                     <Input
                       placeholder="Ex. Full Stack Developer"
                       required
@@ -447,7 +447,7 @@ function AddNewInterview() {
                     />
                   </div>
                   <div className="mt-2 my-3">
-                    <label>Job Description/Tech Stack (In short)</label>
+                    <label>Mock Description/Tech Stack (In short)</label>
                     <Textarea
                       placeholder="Ex. React, Angular, NodeJS, MySQL"
                       required
