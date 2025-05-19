@@ -18,6 +18,9 @@ import { v4 as uuidv4 } from "uuid";
 import { useUser } from "@clerk/nextjs";
 import moment from "moment/moment";
 import { useRouter } from "next/navigation";
+import { Switch } from "@/components/ui/switch"; 
+import { Checkbox } from "@/components/ui/checkbox"
+import { toast } from "sonner";  // For toast notifications
 
 // Enhanced tech skills list with weights (commonality)
 const TECH_SKILLS = [
@@ -105,6 +108,12 @@ function AddNewInterview() {
   const [jsonResponse, setJsonResponse] = useState([]);
   const { user } = useUser();
   const router = useRouter();
+  const [scheduleInterview, setScheduleInterview] = useState(false);
+const [interviewTime, setInterviewTime] = useState('');
+const [reminderEmail, setReminderEmail] = useState(
+  user?.emailAddresses?.[0]?.emailAddress || ''
+);
+const [sendReminder, setSendReminder] = useState(true);
 
   // Load PDF.js dynamically when component mounts
   useEffect(() => {
@@ -325,178 +334,290 @@ function AddNewInterview() {
       setLoading(false);
     }
   };
+  const handleScheduleInterview = async () => {
+  setLoading(true);
+  
+  try {
+    // First save the interview details
+    const interviewData = {
+      jobPosition,
+      jobdesc,
+      jobExperience,
+      resumeText,
+      skills: extractedSkills,
+      scheduledTime: interviewTime,
+      reminderEmail,
+      sendReminder
+    };
+    
+    // Save to your database
+    // const response = await fetch('/api/schedule-interview', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(interviewData),
+    // });
+    
+    // if (!response.ok) throw new Error('Failed to schedule interview');
+    console.log('Interview scheduled successfully:', reminderEmail, interviewTime, jobPosition);
+    // Send confirmation email
+    const emailResponse = await fetch('/api/send-interview-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: reminderEmail,
+        interviewTime,
+        position: jobPosition,
+      }),
+    });
+    
+    if (!emailResponse.ok) throw new Error('Failed to send confirmation email');
+    console.log('Email sent successfully');
+    toast.success('Interview scheduled successfully!');
+    setOpenDialog(false);
+  } catch (error) {
+    toast.error(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div>
-      <div
-        className="p-10 border rounded-lg bg-slate-200 hover:scale-105 hover:shadow-md cursor-pointer transition-all"
-        onClick={() => setOpenDialog(true)}
-      >
-        <h2 className="text-lg text-center">+ Add New Interview</h2>
-      </div>
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">
-              Tell us more about your mock interview
-            </DialogTitle>
+  <div className="p-10 border rounded-lg bg-slate-200 hover:scale-105 hover:shadow-md cursor-pointer transition-all" onClick={() => setOpenDialog(true)}>
+    <h2 className="text-lg text-center">+ Add New Interview</h2>
+  </div>
+  <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+    <DialogContent className="max-w-3xl">
+      <DialogHeader>
+        <DialogTitle className="text-2xl">
+          Tell us more about your mock interview
+        </DialogTitle>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Upload your resume and add details about your job position/role, job description, and
+            years of experience:
+          </p>
+          <form onSubmit={onSubmit}>
             <div>
-              <p className="text-sm text-muted-foreground">
-                Upload your resume and add details about your job position/role, job description, and
-                years of experience:
-              </p>
-              <form onSubmit={onSubmit}>
-                <div>
-                  <div className="mt-2 my-3">
-                    <label>Upload Resume (PDF)</label>
-                    <Input
-                      type="file"
-                      accept=".pdf"
-                      onChange={handleResumeChange}
-                    />
-                    {extractingResume && (
-                      <div className="flex items-center mt-2 text-sm text-blue-600">
-                        <LoaderCircleIcon className="animate-spin mr-2" size={16} />
-                        Extracting text and skills from resume...
-                      </div>
-                    )}
-                    {extractError && (
-                      <div className="flex items-center mt-2 text-sm text-red-600">
-                        <AlertCircleIcon className="mr-2" size={16} />
-                        {extractError}
-                      </div>
-                    )}
-                    {resumeText && !extractingResume && !extractError && (
-                      <div className="flex items-center mt-2 text-sm text-green-600">
-                        <FileTextIcon className="mr-2" size={16} />
-                        Resume text extracted successfully!
-                      </div>
-                    )}
+              <div className="mt-2 my-3">
+                <label>Upload Resume (PDF)</label>
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleResumeChange}
+                />
+                {extractingResume && (
+                  <div className="flex items-center mt-2 text-sm text-blue-600">
+                    <LoaderCircleIcon className="animate-spin mr-2" size={16} />
+                    Extracting text and skills from resume...
                   </div>
-                  
-                  {/* Extracted Skills Section */}
-                  <div className="mt-4 mb-2">
-                    <label className="font-medium">Relevant Technical Skills</label>
-                    <p className="text-sm text-gray-500 mb-2">
-                      These skills were extracted from your resume and are commonly sought in tech roles.
+                )}
+                {extractError && (
+                  <div className="flex items-center mt-2 text-sm text-red-600">
+                    <AlertCircleIcon className="mr-2" size={16} />
+                    {extractError}
+                  </div>
+                )}
+                {resumeText && !extractingResume && !extractError && (
+                  <div className="flex items-center mt-2 text-sm text-green-600">
+                    <FileTextIcon className="mr-2" size={16} />
+                    Resume text extracted successfully!
+                  </div>
+                )}
+              </div>
+              
+              {/* Extracted Skills Section */}
+              <div className="mt-4 mb-2">
+                <label className="font-medium">Relevant Technical Skills</label>
+                <p className="text-sm text-gray-500 mb-2">
+                  These skills were extracted from your resume and are commonly sought in tech roles.
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {extractedSkills.length > 0 ? (
+                    extractedSkills.map((skill, index) => (
+                      <div 
+                        key={index}
+                        className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center"
+                      >
+                        {getDisplaySkill(skill)}
+                        <button 
+                          type="button"
+                          className="ml-2 text-blue-600 hover:text-blue-800"
+                          onClick={() => toggleSkill(skill)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      No technical skills extracted yet. Upload a resume or add skills manually.
                     </p>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {extractedSkills.length > 0 ? (
-                        extractedSkills.map((skill, index) => (
-                          <div 
-                            key={index}
-                            className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center"
-                          >
-                            {getDisplaySkill(skill)}
-                            <button 
-                              type="button"
-                              className="ml-2 text-blue-600 hover:text-blue-800"
-                              onClick={() => toggleSkill(skill)}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-500">
-                          No technical skills extracted yet. Upload a resume or add skills manually.
-                        </p>
-                      )}
+                  )}
+                </div>
+                
+                {/* Add custom skill */}
+                <div className="flex mt-2">
+                  <Input
+                    placeholder="Add a technical skill manually"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="mr-2"
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={addCustomSkill}
+                    disabled={!newSkill}
+                    size="sm"
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="mt-4 my-2">
+                <label>Resume Content {extractError ? "(Enter manually)" : "(Review & Edit)"}</label>
+                <Textarea
+                  placeholder="Enter or edit your resume content here..."
+                  rows={4}
+                  value={resumeText}
+                  onChange={handleManualResumeInput}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  You can edit the extracted text or enter your resume details manually.
+                </p>
+              </div>
+              
+              <div className="mt-4 my-2">
+                <label>Mock Role</label>
+                <Input
+                  placeholder="Ex. Full Stack Developer"
+                  required
+                  onChange={(event) => setJobPosition(event.target.value)}
+                />
+              </div>
+              <div className="mt-2 my-3">
+                <label>Mock Description/Tech Stack (In short)</label>
+                <Textarea
+                  placeholder="Ex. React, Angular, NodeJS, MySQL"
+                  required
+                  value={jobdesc}
+                  onChange={(event) => setJobdesc(event.target.value)}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  The most relevant technical skills from your resume have been pre-filled here.
+                </p>
+              </div>
+              <div className="mt-2 my-3">
+                <label>Years of Experience</label>
+                <Input
+                  placeholder="Ex. 5"
+                  type="number"
+                  required
+                  max="50"
+                  onChange={(event) => setJobExperience(event.target.value)}
+                />
+              </div>
+
+              {/* Schedule Interview Section */}
+              <div className="mt-4 my-3 p-4 border rounded-lg bg-gray-50">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="font-medium">Schedule Interview</label>
+                  <Switch
+                    checked={scheduleInterview} 
+                    onCheckedChange={() => setScheduleInterview(!scheduleInterview)}
+                  />
+                </div>
+                
+                {scheduleInterview && (
+                  <div className="space-y-3">
+                    <div>
+                      <label>Interview Date & Time</label>
+                      <Input
+                        type="datetime-local"
+                        min={new Date().toISOString().slice(0, 16)}
+                        onChange={(e) => setInterviewTime(e.target.value)}
+                        required
+                      />
                     </div>
                     
-                    {/* Add custom skill */}
-                    <div className="flex mt-2">
+                    <div>
+                      <label>Email for Reminder</label>
                       <Input
-                        placeholder="Add a technical skill manually"
-                        value={newSkill}
-                        onChange={(e) => setNewSkill(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        className="mr-2"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={reminderEmail}
+                        onChange={(e) => setReminderEmail(e.target.value)}
+                        required
                       />
-                      <Button 
-                        type="button" 
-                        onClick={addCustomSkill}
-                        disabled={!newSkill}
-                        size="sm"
-                      >
-                        Add
-                      </Button>
                     </div>
+                    
+                    {/* <div className="flex items-center">
+                      <Checkbox
+                        id="send-reminder"
+                        checked={sendReminder}
+                        onCheckedChange={() => setSendReminder(!sendReminder)}
+                      />
+                      <label htmlFor="send-reminder" className="ml-2 text-sm">
+                        Send email reminder 1 hour before interview
+                      </label>
+                    </div> */}
                   </div>
-                  
-                  <div className="mt-4 my-2">
-                    <label>Resume Content {extractError ? "(Enter manually)" : "(Review & Edit)"}</label>
-                    <Textarea
-                      placeholder="Enter or edit your resume content here..."
-                      rows={4}
-                      value={resumeText}
-                      onChange={handleManualResumeInput}
-                      className="font-mono text-sm"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      You can edit the extracted text or enter your resume details manually.
-                    </p>
-                  </div>
-                  
-                  <div className="mt-4 my-2">
-                    <label>Mock Role</label>
-                    <Input
-                      placeholder="Ex. Full Stack Developer"
-                      required
-                      onChange={(event) => setJobPosition(event.target.value)}
-                    />
-                  </div>
-                  <div className="mt-2 my-3">
-                    <label>Mock Description/Tech Stack (In short)</label>
-                    <Textarea
-                      placeholder="Ex. React, Angular, NodeJS, MySQL"
-                      required
-                      value={jobdesc}
-                      onChange={(event) => setJobdesc(event.target.value)}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      The most relevant technical skills from your resume have been pre-filled here.
-                    </p>
-                  </div>
-                  <div className="mt-2 my-3">
-                    <label>Years of Experience</label>
-                    <Input
-                      placeholder="Ex. 5"
-                      type="number"
-                      required
-                      max="50"
-                      onChange={(event) => setJobExperience(event.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-5 justify-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setOpenDialog(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={loading || extractingResume}
-                  >
-                    {loading ? (
-                      <>
-                        <LoaderCircleIcon className="mr-2 animate-spin" />
-                        Generating from AI
-                      </>
-                    ) : (
-                      "Start Interview"
-                    )}
-                  </Button>
-                </div>
-              </form>
+                )}
+              </div>
             </div>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-    </div>
+            <div className="flex gap-5 justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpenDialog(false)}
+              >
+                Cancel
+              </Button>
+              
+              {scheduleInterview ? (
+                <Button 
+                  type="button" 
+                  onClick={handleScheduleInterview}
+                  disabled={loading || extractingResume}
+                >
+                  {loading ? (
+                    <>
+                      <LoaderCircleIcon className="mr-2 animate-spin" />
+                      Scheduling...
+                    </>
+                  ) : (
+                    "Schedule Interview"
+                  )}
+                </Button>
+              ) : (
+                <Button 
+                  type="submit" 
+                  disabled={loading || extractingResume}
+                >
+                  {loading ? (
+                    <>
+                      <LoaderCircleIcon className="mr-2 animate-spin" />
+                      Generating from AI
+                    </>
+                  ) : (
+                    "Start Interview Now"
+                  )}
+                </Button>
+              )}
+            </div>
+          </form>
+        </div>
+      </DialogHeader>
+    </DialogContent>
+  </Dialog>
+</div>
   );
 }
 
