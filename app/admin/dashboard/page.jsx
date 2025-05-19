@@ -1,12 +1,21 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { User, Search, UserPlus, Users, Activity, ArrowUpRight, Calendar, Mail, Phone } from 'lucide-react';
+import { User, Search, UserPlus, Users, Activity, ArrowUpRight, Calendar, Mail, Phone, Trash2, X } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUser, setNewUser] = useState({
+    firstName: '',
+    lastName: '',
+    emailAddress: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -53,6 +62,73 @@ export default function AdminDashboard() {
       day: 'numeric'
     });
   };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewUser(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddUser = () => {
+    if (!newUser.firstName || !newUser.lastName || !newUser.emailAddress) {
+      return; // Basic validation
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // In a real app, you would send a request to your API
+      // Mock implementation for demonstration
+      const newUserData = {
+        id: `user_${Math.random().toString(36).substr(2, 9)}`,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        emailAddresses: [
+          {
+            emailAddress: newUser.emailAddress,
+            verification: { status: 'unverified' }
+          }
+        ],
+        createdAt: new Date().toISOString(),
+        lastSignInAt: null,
+      };
+      
+      setUsers(prev => [newUserData, ...prev]);
+      setNewUser({ firstName: '', lastName: '', emailAddress: '' });
+      setShowAddUserModal(false);
+    } catch (error) {
+      console.error('Failed to add user:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteUser = (user) => {
+    setUserToDelete(user);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteUser = async () => {
+  try {
+    const response = await fetch(`/api/admin/delete-user?userId=${userToDelete.id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete user');
+    }
+
+    // Update UI on successful deletion
+    setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+    setShowDeleteConfirm(false);
+    setUserToDelete(null);
+  } catch (error) {
+    console.error('Failed to delete user:', error);
+  }
+};
+
   
   const Stats = () => (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -122,6 +198,112 @@ export default function AdminDashboard() {
     </div>
   );
 
+  // Add User Modal Component
+  const AddUserModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Add New User</h3>
+          <button 
+            onClick={() => setShowAddUserModal(false)}
+            className="text-gray-400 hover:text-gray-500 focus:outline-none"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              First Name
+            </label>
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              value={newUser.firstName}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Last Name
+            </label>
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              value={newUser.lastName}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="emailAddress" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="emailAddress"
+              name="emailAddress"
+              value={newUser.emailAddress}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+        </div>
+        
+        <div className="mt-6 flex justify-end space-x-3">
+          <button
+            onClick={() => setShowAddUserModal(false)}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAddUser}
+            disabled={isSubmitting}
+            className={`px-4 py-2 rounded-md text-sm bg-blue-600 text-white ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+          >
+            {isSubmitting ? 'Adding...' : 'Add User'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Delete Confirmation Modal Component
+  const DeleteConfirmModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6">
+        <div className="mb-4">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Confirm Deletion</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            Are you sure you want to delete the user {userToDelete?.firstName} {userToDelete?.lastName}? This action cannot be undone.
+          </p>
+        </div>
+        
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={() => setShowDeleteConfirm(false)}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={confirmDeleteUser}
+            className="px-4 py-2 rounded-md text-sm bg-red-600 hover:bg-red-700 text-white"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="p-6 max-w-7xl mx-auto">
@@ -130,7 +312,10 @@ export default function AdminDashboard() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
             <p className="text-gray-500 dark:text-gray-400">Manage and monitor your user base</p>
           </div>
-          {/* <button className="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md flex items-center">
+          {/* <button 
+            onClick={() => setShowAddUserModal(true)}
+            className="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md flex items-center"
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             Add New User
           </button> */}
@@ -188,7 +373,7 @@ export default function AdminDashboard() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Sign In</th>
-                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th> */}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -250,16 +435,17 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {formatDate(user.lastSignInAt)}
                         </td>
-                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
-                            <button className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
-                              View
-                            </button>
-                            <button className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
-                              Edit
+                            <button 
+                              onClick={() => handleDeleteUser(user)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 flex items-center"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
                             </button>
                           </div>
-                        </td> */}
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -291,6 +477,10 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+      
+      {/* Render Modals */}
+      {showAddUserModal && <AddUserModal />}
+      {showDeleteConfirm && <DeleteConfirmModal />}
     </div>
   );
 }

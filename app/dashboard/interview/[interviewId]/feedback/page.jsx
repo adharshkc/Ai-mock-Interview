@@ -51,6 +51,7 @@ function Feedback({ params: rawParams }) {
     setFeedbackList(result);
     setFeedbackList(result);
   };
+  
 
   return (
     <div className="p-10">
