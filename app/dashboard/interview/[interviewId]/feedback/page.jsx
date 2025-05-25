@@ -182,7 +182,7 @@ function Feedback({ params: rawParams }) {
           ) : (
             // Show certificate for poor performance (rating <= 3.5)
             <Image
-              src="/certificate.jpeg"
+              src="/badge.jpg"
               width={900}
               height={400}
               className="mt-7"
