@@ -334,56 +334,48 @@ const [sendReminder, setSendReminder] = useState(true);
       setLoading(false);
     }
   };
-  const handleScheduleInterview = async () => {
-  setLoading(true);
+  // const handleScheduleInterview = async () => {
+  // setLoading(true);
   
-  try {
-    // First save the interview details
-    const interviewData = {
-      jobPosition,
-      jobdesc,
-      jobExperience,
-      resumeText,
-      skills: extractedSkills,
-      scheduledTime: interviewTime,
-      reminderEmail,
-      sendReminder
-    };
+  // try {
+  //   // First save the interview details
+  //   const interviewData = {
+  //     jobPosition,
+  //     jobdesc,
+  //     jobExperience,
+  //     resumeText,
+  //     skills: extractedSkills,
+  //     scheduledTime: interviewTime,
+  //     reminderEmail,
+  //     sendReminder
+  //   };
     
-    // Save to your database
-    // const response = await fetch('/api/schedule-interview', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(interviewData),
-    // });
+  
+  //   // if (!response.ok) throw new Error('Failed to schedule interview');
+  //   console.log('Interview scheduled successfully:', reminderEmail, interviewTime, jobPosition);
+  //   // Send confirmation email
+  //   const emailResponse = await fetch('/api/send-interview-email', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({
+  //       email: reminderEmail,
+  //       interviewTime,
+  //       position: jobPosition,
+  //     }),
+  //   });
     
-    // if (!response.ok) throw new Error('Failed to schedule interview');
-    console.log('Interview scheduled successfully:', reminderEmail, interviewTime, jobPosition);
-    // Send confirmation email
-    const emailResponse = await fetch('/api/send-interview-email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: reminderEmail,
-        interviewTime,
-        position: jobPosition,
-      }),
-    });
-    
-    if (!emailResponse.ok) throw new Error('Failed to send confirmation email');
-    console.log('Email sent successfully');
-    toast.success('Interview scheduled successfully!');
-    setOpenDialog(false);
-  } catch (error) {
-    toast.error(error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  //   if (!emailResponse.ok) throw new Error('Failed to send confirmation email');
+  //   console.log('Email sent successfully');
+  //   toast.success('Interview scheduled successfully!');
+  //   setOpenDialog(false);
+  // } catch (error) {
+  //   toast.error(error.message);
+  // } finally {
+  //   setLoading(false);
+  // }
+// };
 
   return (
     <div>
@@ -528,14 +520,14 @@ const [sendReminder, setSendReminder] = useState(true);
               {/* Schedule Interview Section */}
               <div className="mt-4 my-3 p-4 border rounded-lg bg-gray-50">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="font-medium">Schedule Interview</label>
-                  <Switch
+                  {/* <label className="font-medium">Schedule Interview</label> */}
+                  {/* <Switch
                     checked={scheduleInterview} 
                     onCheckedChange={() => setScheduleInterview(!scheduleInterview)}
-                  />
+                  /> */}
                 </div>
                 
-                {scheduleInterview && (
+                {/* {scheduleInterview && (
                   <div className="space-y-3">
                     <div>
                       <label>Interview Date & Time</label>
@@ -556,7 +548,7 @@ const [sendReminder, setSendReminder] = useState(true);
                         onChange={(e) => setReminderEmail(e.target.value)}
                         required
                       />
-                    </div>
+                    </div> */}
                     
                     {/* <div className="flex items-center">
                       <Checkbox
@@ -568,8 +560,8 @@ const [sendReminder, setSendReminder] = useState(true);
                         Send email reminder 1 hour before interview
                       </label>
                     </div> */}
-                  </div>
-                )}
+                  {/* </div>
+                )} */}
               </div>
             </div>
             <div className="flex gap-5 justify-end">
@@ -581,22 +573,7 @@ const [sendReminder, setSendReminder] = useState(true);
                 Cancel
               </Button>
               
-              {scheduleInterview ? (
-                <Button 
-                  type="button" 
-                  onClick={handleScheduleInterview}
-                  disabled={loading || extractingResume}
-                >
-                  {loading ? (
-                    <>
-                      <LoaderCircleIcon className="mr-2 animate-spin" />
-                      Scheduling...
-                    </>
-                  ) : (
-                    "Schedule Interview"
-                  )}
-                </Button>
-              ) : (
+
                 <Button 
                   type="submit" 
                   disabled={loading || extractingResume}
@@ -610,7 +587,7 @@ const [sendReminder, setSendReminder] = useState(true);
                     "Start Interview Now"
                   )}
                 </Button>
-              )}
+              
             </div>
           </form>
         </div>
